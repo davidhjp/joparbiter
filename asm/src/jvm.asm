@@ -1396,11 +1396,13 @@ jopsys_getfield:				// version from Native
 			ldmrd nxt			// read result
 
 putfield:
+			tdma
 			stpf 				// start putfield index is taken from the BC operand
 			nop opd
 			nop	opd				// get rid of second stack location
 			wait
 			wait
+			tdma
 			pop nxt
 
 			// TODO: change order between value and index in Native

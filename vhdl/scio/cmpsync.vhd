@@ -75,14 +75,14 @@ begin
 				-- smallest CPU_ID bigger than rr_index wins
 				-- if none, smallest CPU_ID wins
   				for i in cpu_cnt-1 downto 0 loop
-  					if i <= rr_index and sync_in_array(i).lock_req = '1' then 
+  					if i <= rr_index and sync_in_array(i).req = '1' then 
   						next_state <= locked;
   						next_locked_id <= i;
 						next_rr_index <= i;
   					end if;
   				end loop;
   				for i in cpu_cnt-1 downto 0 loop
-  					if i > rr_index and sync_in_array(i).lock_req = '1' then 
+  					if i > rr_index and sync_in_array(i).req = '1' then 
   						next_state <= locked;
   						next_locked_id <= i;
 						next_rr_index <= i;
@@ -91,20 +91,20 @@ begin
   				
   			when locked =>
   				-- CPU frees the lock
-  				if sync_in_array(locked_id).lock_req = '0' then
+  				if sync_in_array(locked_id).req = '0' then
   					next_state <= idle;
   					next_locked_id <= cpu_cnt;
 						
 					-- new lock request
 					for i in cpu_cnt-1 downto 0 loop
-						if i <= rr_index and sync_in_array(i).lock_req = '1' then 
+						if i <= rr_index and sync_in_array(i).req = '1' then 
 							next_state <= locked;
 							next_locked_id <= i;
 							next_rr_index <= i;
 						end if;
 					end loop;
 					for i in cpu_cnt-1 downto 0 loop
-						if i > rr_index and sync_in_array(i).lock_req = '1' then 
+						if i > rr_index and sync_in_array(i).req = '1' then 
 							next_state <= locked;
 							next_locked_id <= i;
 							next_rr_index <= i;

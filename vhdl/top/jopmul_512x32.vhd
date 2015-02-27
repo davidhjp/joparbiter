@@ -50,7 +50,7 @@ generic (
 	jpc_width	: integer := 12;	-- address bits of java bytecode pc = cache size
 	block_bits	: integer := 5;		-- 2*block_bits is number of cache blocks
 	spm_width	: integer := 0;		-- size of scratchpad RAM (in number of address bits for 32-bit words)
-	cpu_cnt		: integer := 2		-- number of cpus
+	cpu_cnt		: integer := 3		-- number of cpus
 );
 
 port (
@@ -174,6 +174,9 @@ end component;
 -- not available at this board:
 	signal ser_ncts			: std_logic;
 	signal ser_nrts			: std_logic;
+
+	
+	signal tdma_access : std_logic_vector(0 to cpu_cnt-1);
 	
 -- remove the comment for RAM access counting
 -- signal ram_count		: std_logic;
@@ -235,7 +238,7 @@ end process;
 			port map(clk_int, int_res,
 				sc_arb_out(i), sc_arb_in(i),
 				sc_io_out(i), sc_io_in(i),
-				irq_in(i), irq_out(i), exc_req(i));
+				irq_in(i), irq_out(i), exc_req(i), tdma_access => tdma_access(i));
 	end generate;
 	
 	arbiter: entity work.arbiter
@@ -248,7 +251,7 @@ end process;
 		)
 		port map(clk_int, int_res,
 			sc_arb_out, sc_arb_in,
-			sc_mem_out, sc_mem_in);
+			sc_mem_out, sc_mem_in,tdma_access);
 
 	-- io for processor 0
 	io: entity work.scio generic map (

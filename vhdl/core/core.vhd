@@ -103,7 +103,9 @@ port (
 	sp_ov		: out std_logic;
 
 	aout		: out std_logic_vector(width-1 downto 0);
-	bout		: out std_logic_vector(width-1 downto 0)
+	bout		: out std_logic_vector(width-1 downto 0);
+	
+	tdma_access : out std_logic
 );
 end core;
 
@@ -244,7 +246,8 @@ port (
 	ena_b		: out std_logic;
 	ena_vp		: out std_logic;
 	ena_jpc		: out std_logic;
-	ena_ar		: out std_logic
+	ena_ar		: out std_logic;
+	tdma_access : out std_logic
 );
 end component;
 
@@ -326,7 +329,7 @@ begin
 			sel_sub, sel_amux, ena_a,
 			sel_bmux, sel_log, sel_shf, sel_lmux, sel_imux, sel_rmux, sel_smux,
 			sel_mmux, sel_rda, sel_wra,
-			wr_ena, ena_b, ena_vp, ena_jpc, ena_ar);
+			wr_ena, ena_b, ena_vp, ena_jpc, ena_ar, tdma_access);
 
 	stk: stack generic map (width, jpc_width)
 		port map (clk, reset, din, dir, opd, jpc_out,

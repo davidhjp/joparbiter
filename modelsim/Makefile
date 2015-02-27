@@ -37,7 +37,8 @@ all: clean base
 
 cmp: clean base
 	$(WINE) vcom $(OPTIONS) $(JOPDIR)/simpcon/sc_arbiter_pack.vhd
-	$(WINE) vcom $(OPTIONS) $(JOPDIR)/simpcon/sc_arbiter_fair.vhd
+	$(WINE) vcom $(OPTIONS) $(JOPDIR)/simpcon/sc_arbiter_tdma.vhd
+	$(WINE) vcom $(OPTIONS) $(JOPDIR)/scio/ihlu.vhd
 	$(WINE) vcom $(OPTIONS) $(JOPDIR)/scio/cmpsync.vhd
 	$(WINE) vcom $(OPTIONS) $(JOPDIR)/top/jopmul.vhd
 	$(WINE) vcom $(OPTIONS) $(JOPDIR)/simulation/tb_jop.vhd

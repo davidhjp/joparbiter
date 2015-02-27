@@ -1,10 +1,10 @@
-/* Quartus II Version 9.1 Build 222 10/21/2009 SJ Web Edition */
+/* Quartus II 64-Bit Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Full Version */
 JedecChain;
 	FileRevision(JESD32A);
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP2C70F896) Path("Z:/martin/jop/quartus/altde2-70cmp/") File("jop.sof") MfrSpec(OpMask(1));
+		Device PartName(EP2C70F896) Path("D:/joparbiter/quartus/altde2-70cmp/") File("jop.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

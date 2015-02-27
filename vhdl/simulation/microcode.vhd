@@ -110,7 +110,8 @@ architecture sim of microcode is
 		bz,
 		bnz,
 		jmp,
-		unknown
+		unknown,
+		tdma
 	);
 	signal val : mcval;
 
@@ -280,6 +281,7 @@ begin
 			when "0100000001" => val <= wait_x;
 			when "0100000010" => val <= jbr;
 			when "0100010000" => val <= stgs;
+			when "0100000011" => val <= tdma;
 
 			when others => null;
 		end case;

@@ -91,7 +91,9 @@ port (
 --	TM exception
 --
 
-	exc_tm_rollback	: in std_logic := '0'
+	exc_tm_rollback	: in std_logic := '0';
+	
+	tdma_access : out std_logic
 );
 end jopcpu;
 
@@ -177,7 +179,8 @@ begin
 			irq_out => irq_out,
 			sp_ov => sp_ov,
 			aout => stack_tos,
-			bout => stack_nos
+			bout => stack_nos,
+			tdma_access => tdma_access
 		);
 
 	exc_req.spov <= sp_ov;

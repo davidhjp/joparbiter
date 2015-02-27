@@ -173,6 +173,7 @@ public class Instruction implements Serializable {
 			new Instruction("nop", 0x100, 0, JmpType.NOP, StackType.NOP),
 			new Instruction("wait", 0x101, 0, JmpType.NOP, StackType.NOP),
 			new Instruction("jbr", 0x102, 0, JmpType.NOP, StackType.NOP),
+			new Instruction("tdma", 0x103, 0, JmpType.NOP, StackType.NOP),
 			
 			// no SP change instructions for MMU
 			// 4 bit subfield selects function (pop type)

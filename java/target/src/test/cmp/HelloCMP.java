@@ -80,7 +80,7 @@ public class HelloCMP implements Runnable {
 		
 		StringBuffer sb = new StringBuffer();
 		sb.append("Hello World from CPU ");
-		sb.append(id);
+		sb.append(String.valueOf(id));
 		for (int i=0; i<10; ++i) {
 			msg.addElement(sb);		
 			RtThread.sleepMs(300*id);

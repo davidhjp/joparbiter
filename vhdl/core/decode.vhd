@@ -109,7 +109,9 @@ port (
 	ena_b		: out std_logic;
 	ena_vp		: out std_logic;
 	ena_jpc		: out std_logic;
-	ena_ar		: out std_logic
+	ena_ar		: out std_logic;
+	
+	tdma_access : out std_logic
 );
 end decode;
 
@@ -284,6 +286,7 @@ begin
 		ena_vp <= '0';
 		ena_jpc <= '0';
 		ena_ar <= '0';
+		tdma_access <= '0';
 
 	elsif rising_edge(clk) then
 
@@ -300,6 +303,7 @@ begin
 		ena_vp <= '0';
 		ena_jpc <= '0';
 		ena_ar <= '0';
+		tdma_access <= '0';
 
 		case ir is
 
@@ -383,6 +387,8 @@ begin
 --			when "0111------" =>			-- bnz
 --			when "1---------" =>			-- jmp
 --					ena_a <= '0';
+			when "0100000011" =>       -- tdma
+					tdma_access <= '1';
 
 			when others =>
 				null;

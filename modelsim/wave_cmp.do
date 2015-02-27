@@ -4,6 +4,7 @@ add wave -noupdate -format Logic -radix hexadecimal /tb_jop/joptop/clk_int
 add wave -noupdate -format Logic -radix hexadecimal /tb_jop/joptop/int_res
 add wave -noupdate -format Logic -radix hexadecimal /tb_jop/joptop/io/wd
 add wave -noupdate -format Literal -radix ascii /tb_jop/joptop/io/ua/char
+add wave -noupdate -format Literal -radix binary /tb_jop/joptop/tdma_access
 add wave -noupdate -divider core0
 add wave -noupdate -format Literal -radix hexadecimal /tb_jop/joptop/gen_cpu__0/cpu/core/stk/a
 add wave -noupdate -format Literal -radix hexadecimal /tb_jop/joptop/gen_cpu__0/cpu/core/stk/b

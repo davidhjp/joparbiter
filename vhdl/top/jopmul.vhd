@@ -182,7 +182,8 @@ end component;
 
 	signal sync_in_array	: sync_in_array_type(0 to cpu_cnt-1);
 	signal sync_out_array	: sync_out_array_type(0 to cpu_cnt-1);
-	
+
+	signal tdma_access : std_logic_vector(0 to cpu_cnt-1);
 -- remove the comment for RAM access counting
 -- signal ram_count		: std_logic;
 	
@@ -240,7 +241,7 @@ end process;
 			port map(clk_int, int_res,
 				sc_arb_out(i), sc_arb_in(i),
 				sc_io_out(i), sc_io_in(i), irq_in(i), 
-				irq_out(i), exc_req(i));
+				irq_out(i), exc_req(i), tdma_access => tdma_access(i));
 	end generate;
 			
 	arbiter: entity work.arbiter
@@ -254,7 +255,7 @@ end process;
 		)
 		port map(clk_int, int_res,
 			sc_arb_out, sc_arb_in,
-			sc_mem_out, sc_mem_in
+			sc_mem_out, sc_mem_in, tdma_access
 			-- Enable for use with Round Robin Arbiter
 			-- sync_out_array(1)
 			);

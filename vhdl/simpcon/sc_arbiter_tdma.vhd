@@ -78,7 +78,8 @@ entity arbiter is
 		arb_out			: in arb_out_type(0 to cpu_cnt-1);
 		arb_in			: out arb_in_type(0 to cpu_cnt-1);
 		mem_out			: out sc_out_type;
-		mem_in			: in sc_in_type
+		mem_in			: in sc_in_type;
+		tdma_access    : in std_logic_vector(0 to cpu_cnt-1)
 		);
 end arbiter;
 
