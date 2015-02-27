@@ -389,6 +389,7 @@ begin
 --					ena_a <= '0';
 			when "0100000011" =>       -- tdma
 					tdma_access <= '1';
+					ena_a <= '0';
 
 			when others =>
 				null;

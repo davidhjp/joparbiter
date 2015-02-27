@@ -1402,8 +1402,8 @@ putfield:
 			nop	opd				// get rid of second stack location
 			wait
 			wait
-			tdma
-			pop nxt
+			pop
+			tdma nxt
 
 			// TODO: change order between value and index in Native
 jopsys_putfield:				// Version from Native
