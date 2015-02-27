@@ -83,7 +83,7 @@ public class HelloCMP implements Runnable {
 		sb.append(String.valueOf(id));
 		for (int i=0; i<10; ++i) {
 			msg.addElement(sb);		
-			RtThread.sleepMs(300*id);
+//			RtThread.sleepMs(300*id);
 		}
 	}
 
