@@ -42,7 +42,7 @@ cmp: clean base
 	$(WINE) vcom $(OPTIONS) $(JOPDIR)/scio/cmpsync.vhd
 	$(WINE) vcom $(OPTIONS) $(JOPDIR)/top/jopmul.vhd
 	$(WINE) vcom $(OPTIONS) $(JOPDIR)/simulation/tb_jop.vhd
-	$(WINE) vsim -do sim_cmp.do tb_jop
+	$(WINE) vsim -i -do sim_cmp.do tb_jop
 
 # simulation with the i2c controller and an i2c eeprom
 iic: clean base
