@@ -128,6 +128,7 @@ architecture rtl of decode is
 	signal ir		: std_logic_vector(9 downto 0);		-- instruction register
 	signal is_push	: std_logic;
 	signal is_pop	: std_logic;
+	signal tdma_access_s : std_logic;
 
 begin
 
@@ -286,7 +287,7 @@ begin
 		ena_vp <= '0';
 		ena_jpc <= '0';
 		ena_ar <= '0';
-		tdma_access <= '0';
+		tdma_access_s <= '0';
 
 	elsif rising_edge(clk) then
 
@@ -303,7 +304,6 @@ begin
 		ena_vp <= '0';
 		ena_jpc <= '0';
 		ena_ar <= '0';
-		tdma_access <= '0';
 
 		case ir is
 
@@ -388,7 +388,7 @@ begin
 --			when "1---------" =>			-- jmp
 --					ena_a <= '0';
 			when "0100000011" =>       -- tdma
-					tdma_access <= '1';
+					tdma_access_s <= not (tdma_access_s);
 					ena_a <= '0';
 
 			when others =>
@@ -566,5 +566,6 @@ end process;
 
 	-- route bytcode operand from bcfetch to MMU
 	mem_in.bcopd <= bcopd;
+	tdma_access <= tdma_access_s;
 
 end rtl;
