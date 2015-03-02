@@ -113,10 +113,64 @@ architecture rtl of arbiter is
 	signal rdslot : slot_type; -- defines which CPU may read
 	signal wrslot : slot_type; -- defines which CPU may write
 	
+	constant DWIDTH : integer := 8;
+	
 begin
+
+
+	process(clk, reset)
+	variable active_num : integer range 0 to cpu_cnt := 0;
+	variable N : unsigned (DWIDTH-1 downto 0) := to_unsigned(cpu_cnt,DWIDTH);
+	variable D,R,Q : unsigned (DWIDTH-1 downto 0) := (others => '0');
+	variable cc : unsigned (DWIDTH-1 downto 0) := (others => '0');
+	begin
+		if reset = '1' then
+			active_num := 0;
+			N := to_unsigned(cpu_cnt,DWIDTH);
+			D := (others => '0');
+			R := (others => '0');
+			Q := (others => '0');
+			cc := (others => '0');
+		elsif rising_edge(clk) then
+			active_num := 0;
+			for i in 0 to cpu_cnt-1 loop
+				if tdma_access(i) = '1' then
+					active_num := active_num + 1;
+				end if;
+			end loop;
+			D := to_unsigned(active_num,DWIDTH);
+			R := (others => '0');
+			Q := (others => '0');
+			cc := (others => '0');
+			for i in cpu_cnt-1 downto 0 loop
+				R := R sll 1;
+				R(0) := N(i);
+				if R >= D then
+					R := R - D;
+					Q(i) := '1';
+				end if;
+			end loop;
+			for i in 0 to cpu_cnt-1 loop
+				if tdma_access(i) = '1' then
+					if R > 0 then
+						cc := to_unsigned(slot_length * to_integer(Q) + slot_length + to_integer(cc),cc'length);
+						cpu_time(i) <= to_integer(cc);
+						R := R - 1;
+					else
+						cc := to_unsigned(slot_length * to_integer(Q) + to_integer(cc),cc'length);
+						cpu_time(i) <= to_integer(cc);
+					end if;
+				else 
+					cpu_time(i) <= 0;
+				end if;
+			end loop;
+		end if;
+	end process;
 
 	-- generate counter
 	gen_counter: process(clk, reset)
+	variable idle_num : integer range 0 to cpu_cnt := 0;
+	variable active_num : integer range 0 to cpu_cnt := 0;
 	begin
 		if reset = '1' then
 			counter <= 0;
@@ -129,9 +183,9 @@ begin
 	end process;
 	
 	-- generate slot information
-	gen_timing: for i in 0 to cpu_cnt-1 generate
-		cpu_time(i) <= (i+1)*slot_length;
-	end generate;	
+--	gen_timing: for i in 0 to cpu_cnt-1 generate
+--		cpu_time(i) <= (i+1)*slot_length;
+--	end generate;	
 
 	-- a time slot is assigned to each CPU 
 	gen_slots: process(counter, cpu_time)
@@ -144,13 +198,15 @@ begin
 
 		lower_limit := 0;
 		for i in 0 to cpu_cnt-1 loop
-			if (counter >= lower_limit) and (counter < cpu_time(i)-write_gap) then
-				wrslot(i) <= '1';
+			if cpu_time(i) > 0 then
+				if (counter >= lower_limit) and (counter < cpu_time(i)-write_gap) then
+					wrslot(i) <= '1';
+				end if;
+				if (counter >= lower_limit) and (counter < cpu_time(i)-read_gap) then
+					rdslot(i) <= '1';
+				end if;
+				lower_limit := cpu_time(i);
 			end if;
-			if (counter >= lower_limit) and (counter < cpu_time(i)-read_gap) then
-				rdslot(i) <= '1';
-			end if;
-			lower_limit := cpu_time(i);
 		end loop;
 	end process;	
 
