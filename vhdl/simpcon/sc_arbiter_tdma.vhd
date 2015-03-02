@@ -114,6 +114,7 @@ architecture rtl of arbiter is
 	signal wrslot : slot_type; -- defines which CPU may write
 	
 	constant DWIDTH : integer := 8;
+	signal slot_counter : integer range 0 to slot_length;
 	
 begin
 
@@ -131,7 +132,7 @@ begin
 			R := (others => '0');
 			Q := (others => '0');
 			cc := (others => '0');
-		elsif rising_edge(clk) then
+		elsif rising_edge(clk) and slot_counter = slot_length-1 then
 			active_num := 0;
 			for i in 0 to cpu_cnt-1 loop
 				if tdma_access(i) = '1' then
@@ -169,15 +170,18 @@ begin
 
 	-- generate counter
 	gen_counter: process(clk, reset)
-	variable idle_num : integer range 0 to cpu_cnt := 0;
-	variable active_num : integer range 0 to cpu_cnt := 0;
 	begin
 		if reset = '1' then
 			counter <= 0;
+			slot_counter <= 0;
 		elsif rising_edge(clk) then
 			counter <= counter + 1;
+			slot_counter <= slot_counter + 1;
 			if counter = period-1 then
 				counter <= 0;
+			end if;
+			if slot_counter = slot_length-1 then
+				slot_counter <= 0;
 			end if;
 		end if;
 	end process;
@@ -188,7 +192,7 @@ begin
 --	end generate;	
 
 	-- a time slot is assigned to each CPU 
-	gen_slots: process(counter, cpu_time)
+	gen_slots: process(counter, slot_counter, cpu_time)
 		variable lower_limit : integer;
 	begin
 		for i in 0 to cpu_cnt-1 loop
@@ -199,10 +203,10 @@ begin
 		lower_limit := 0;
 		for i in 0 to cpu_cnt-1 loop
 			if cpu_time(i) > 0 then
-				if (counter >= lower_limit) and (counter < cpu_time(i)-write_gap) then
+				if (counter >= lower_limit) and (slot_counter < slot_length - write_gap) and (counter < cpu_time(i)) then
 					wrslot(i) <= '1';
 				end if;
-				if (counter >= lower_limit) and (counter < cpu_time(i)-read_gap) then
+				if (counter >= lower_limit) and (slot_counter < slot_length - read_gap) and (counter < cpu_time(i)) then
 					rdslot(i) <= '1';
 				end if;
 				lower_limit := cpu_time(i);
