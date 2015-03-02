@@ -329,7 +329,7 @@ begin
 			sel_sub, sel_amux, ena_a,
 			sel_bmux, sel_log, sel_shf, sel_lmux, sel_imux, sel_rmux, sel_smux,
 			sel_mmux, sel_rda, sel_wra,
-			wr_ena, ena_b, ena_vp, ena_jpc, ena_ar, tdma_access);
+			wr_ena, ena_b, ena_vp, ena_jpc, ena_ar);
 
 	stk: stack generic map (width, jpc_width)
 		port map (clk, reset, din, dir, opd, jpc_out,
@@ -342,5 +342,6 @@ begin
 
 	aout <= stk_aout;
 	bout <= stk_bout;
+	tdma_access <= bsy;
 
 end rtl;

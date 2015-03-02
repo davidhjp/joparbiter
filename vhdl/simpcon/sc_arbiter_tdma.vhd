@@ -135,7 +135,7 @@ begin
 		elsif rising_edge(clk) and slot_counter = slot_length-1 then
 			active_num := 0;
 			for i in 0 to cpu_cnt-1 loop
-				if tdma_access(i) = '1' then
+				if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
 					active_num := active_num + 1;
 				end if;
 			end loop;
@@ -152,7 +152,7 @@ begin
 				end if;
 			end loop;
 			for i in 0 to cpu_cnt-1 loop
-				if tdma_access(i) = '1' then
+				if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
 					if R > 0 then
 						cc := to_unsigned(slot_length * to_integer(Q) + slot_length + to_integer(cc),cc'length);
 						cpu_time(i) <= to_integer(cc);

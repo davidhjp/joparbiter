@@ -474,7 +474,6 @@ begin
 		mul_wr <= '0';
 		wr_dly <= '0';
 
-
 	elsif rising_edge(clk) then
 		mem_in.rd <= '0';
 		mem_in.wr <= '0';
