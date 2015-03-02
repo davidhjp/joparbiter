@@ -1,3 +1,4 @@
+
 /*
   This file is part of JOP, the Java Optimized Processor
     see <http://www.jopdesign.com/>
@@ -26,6 +27,7 @@ package cmp;
 
 import java.util.Vector;
 
+import util.Timer;
 import joprt.RtThread;
 
 import com.jopdesign.io.IOFactory;
@@ -41,8 +43,10 @@ import com.jopdesign.sys.Startup;
 public class HelloCMP implements Runnable {
 	
 	int id;
+	int counter;
 	
 	static Vector msg;
+	StringBuffer sb ;
 
 	public HelloCMP(int i) {
 		id = i;
@@ -66,22 +70,31 @@ public class HelloCMP implements Runnable {
 		// start the other CPUs
 		sys.signal = 1;
 		
+		int cc = 0;
 		// print their messages
-		for (;;) {
+		Timer timer = new Timer();
+		int start = timer.us();
+		while (cc < 2000) {
 			int size = msg.size();
 			if (size!=0) {
+				cc++;
 				StringBuffer sb = (StringBuffer) msg.remove(0);
-				System.out.println(sb);
+//				System.out.println(cc);
 			}
 		}
+		int end = timer.us();
+		System.out.println("done "+(end-start)+" "+cc);
 	}
 
 	public void run() {
 		
-		StringBuffer sb = new StringBuffer();
-		sb.append("Hello World from CPU ");
-		sb.append(String.valueOf(id));
-		for (int i=0; i<10; ++i) {
+		for (int i=0; i<1000; ++i) {
+			sb = new StringBuffer();
+			sb.append("Hello World from CPU ");
+			sb.append(String.valueOf(id));
+			counter++;
+			sb.append(" counter : ");
+			sb.append(String.valueOf(counter));
 			msg.addElement(sb);		
 //			RtThread.sleepMs(300*id);
 		}
