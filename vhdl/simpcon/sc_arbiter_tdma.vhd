@@ -116,7 +116,6 @@ architecture rtl of arbiter is
 	constant DWIDTH : integer := 8;
 	constant N : unsigned (DWIDTH-1 downto 0) := to_unsigned(cpu_cnt,DWIDTH);
 	signal TDMA_in_use : std_logic;
-	signal slot_counter : integer range 0 to slot_length;
 	
 begin
 	
@@ -130,22 +129,16 @@ begin
 			active_num := 0;
 			counter <= 0;
 			TDMA_in_use <= '0';
-			slot_counter <= 0;
 			period <= cpu_cnt*slot_length;
 		elsif rising_edge(clk) then
 		
 			if TDMA_in_use = '1' then
 				counter <= counter + 1;
-				slot_counter <= slot_counter + 1;
 				if counter = period-1 then
 					counter <= 0;
 				end if;
-				if slot_counter = slot_length-1 then
-					slot_counter <= 0;
-				end if;
 			else
 				counter <= 0;
-				slot_counter <= 0;
 			end if;
 
 			active_num := 0;
@@ -167,11 +160,11 @@ begin
 				else
 					TDMA_in_use <= '0';
 					counter <= 0;
-					slot_counter <= 0;
 				end if;
-			elsif slot_counter = slot_length-1 then
+			elsif counter = period-1 then
 				for i in 0 to cpu_cnt-1 loop
-					if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
+					if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' or
+						arb_out(i).rd = '1' or arb_out(i).wr = '1' then
 						cc := cc + slot_length;
 						active_num := active_num + 1;
 						cpu_time(i) <= cc;
@@ -186,7 +179,6 @@ begin
 				else
 					TDMA_in_use <= '0';
 					counter <= 0;
-					slot_counter <= 0;
 				end if;
 			end if;
 		end if;
@@ -211,7 +203,7 @@ begin
 --	end generate;	
 
 	-- a time slot is assigned to each CPU 
-	gen_slots: process(counter, slot_counter, cpu_time)
+	gen_slots: process(counter, cpu_time)
 		variable lower_limit : integer;
 	begin
 		for i in 0 to cpu_cnt-1 loop

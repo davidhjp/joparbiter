@@ -72,17 +72,16 @@ public class HelloCMP implements Runnable {
 		
 		int cc = 0;
 		// print their messages
-		Timer timer = new Timer();
-		int start = timer.us();
+		long start = System.currentTimeMillis();
 		while (cc < (sys.nrCpu-1)*1000) {
 			int size = msg.size();
 			if (size!=0) {
 				cc++;
 				StringBuffer sb = (StringBuffer) msg.remove(0);
-//				System.out.println(sb);
+				System.out.println(sb);
 			}
 		}
-		int end = timer.us();
+		long end = System.currentTimeMillis();
 		System.out.println("done "+(end-start)+" "+cc);
 	}
 
