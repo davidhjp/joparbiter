@@ -102,10 +102,10 @@ architecture rtl of arbiter is
 	type waitstate_array is array (0 to cpu_cnt-1) of waitstate_type;
 	signal waitstate, next_waitstate : waitstate_array;
 
-	constant period : integer := cpu_cnt*slot_length;
+	signal period : integer range 0 to cpu_cnt*slot_length;
 
 -- counter
-	subtype counter_type is integer range 0 to period;
+	subtype counter_type is integer range 0 to cpu_cnt*slot_length;
 	signal counter : counter_type;
 	type time_type is array (0 to cpu_cnt-1) of counter_type;
 	signal cpu_time : time_type; -- how much clock cycles each CPU
@@ -115,88 +115,80 @@ architecture rtl of arbiter is
 	
 	constant DWIDTH : integer := 8;
 	constant N : unsigned (DWIDTH-1 downto 0) := to_unsigned(cpu_cnt,DWIDTH);
-	signal slot_counter : integer range 0 to slot_length;
 	signal TDMA_in_use : std_logic;
+	signal slot_counter : integer range 0 to slot_length;
 	
 begin
-
-
+	
 	process(clk, reset)
+	variable cc : integer range 0 to slot_length * cpu_cnt;
 	variable active_num : integer range 0 to cpu_cnt := 0;
-	variable D,R,Q : unsigned (DWIDTH-1 downto 0) := (others => '0');
-	variable cc : unsigned (DWIDTH-1 downto 0) := (others => '0');
 	begin
 		if reset = '1' then
+			cc := 0;
+			cpu_time <= (others => 0);
 			active_num := 0;
-			D := (others => '0');
-			R := (others => '0');
-			Q := (others => '0');
-			cc := (others => '0');
-			slot_counter <= 0;
 			counter <= 0;
 			TDMA_in_use <= '0';
+			slot_counter <= 0;
+			period <= cpu_cnt*slot_length;
 		elsif rising_edge(clk) then
-			active_num := 0;
-			for i in 0 to cpu_cnt-1 loop
-				if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
-					active_num := active_num + 1;
-				end if;
-			end loop;
-			
+		
 			if TDMA_in_use = '1' then
-				slot_counter <= slot_counter + 1;
 				counter <= counter + 1;
+				slot_counter <= slot_counter + 1;
+				if counter = period-1 then
+					counter <= 0;
+				end if;
+				if slot_counter = slot_length-1 then
+					slot_counter <= 0;
+				end if;
 			else
-				slot_counter <= 0;
 				counter <= 0;
-			end if;
-			
-			if slot_counter = slot_length-1 then
 				slot_counter <= 0;
 			end if;
-			if counter = period-1 then
-				counter <= 0;
-			end if;
 
-
-			if TDMA_in_use = '0' or slot_counter = slot_length-1 then
-				D := to_unsigned(active_num,DWIDTH);
-				R := (others => '0');
-				Q := (others => '0');
-				cc := (others => '0');
-				for i in cpu_cnt-1 downto 0 loop
-					R := R sll 1;
-					R(0) := N(i);
-					if R >= D then
-						R := R - D;
-						Q(i) := '1';
-					end if;
-				end loop;
+			active_num := 0;
+			cc := 0;
+			if TDMA_in_use = '0' then
 				for i in 0 to cpu_cnt-1 loop
-					if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
-						if R > 0 then
-							cc := to_unsigned(slot_length * to_integer(Q) + slot_length + to_integer(cc),cc'length);
-							cpu_time(i) <= to_integer(cc);
-							R := R - 1;
-						else
-							cc := to_unsigned(slot_length * to_integer(Q) + to_integer(cc),cc'length);
-							cpu_time(i) <= to_integer(cc);
-						end if;
-					else 
+					if arb_out(i).rd = '1' or arb_out(i).wr = '1' then
+						cc := cc + slot_length;
+						active_num := active_num + 1;
+						cpu_time(i) <= cc;
+					else
 						cpu_time(i) <= 0;
 					end if;
 				end loop;
 				
 				if active_num > 0 then
 					TDMA_in_use <= '1';
+					period <= active_num * slot_length;
 				else
 					TDMA_in_use <= '0';
-					slot_counter <= 0;
 					counter <= 0;
+					slot_counter <= 0;
+				end if;
+			elsif slot_counter = slot_length-1 then
+				for i in 0 to cpu_cnt-1 loop
+					if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
+						cc := cc + slot_length;
+						active_num := active_num + 1;
+						cpu_time(i) <= cc;
+					else
+						cpu_time(i) <= 0;
+					end if;
+				end loop;
+				
+				if active_num > 0 then
+					TDMA_in_use <= '1';
+					period <= active_num * slot_length;
+				else
+					TDMA_in_use <= '0';
+					counter <= 0;
+					slot_counter <= 0;
 				end if;
 			end if;
-			
-
 		end if;
 	end process;
 
@@ -230,10 +222,10 @@ begin
 		lower_limit := 0;
 		for i in 0 to cpu_cnt-1 loop
 			if cpu_time(i) > 0 then
-				if (counter >= lower_limit) and (slot_counter < slot_length - write_gap) and (counter < cpu_time(i)) then
+				if (counter >= lower_limit) and (counter < cpu_time(i) - write_gap) then
 					wrslot(i) <= '1';
 				end if;
-				if (counter >= lower_limit) and (slot_counter < slot_length - read_gap) and (counter < cpu_time(i)) then
+				if (counter >= lower_limit) and (counter < cpu_time(i) - read_gap) then
 					rdslot(i) <= '1';
 				end if;
 				lower_limit := cpu_time(i);
