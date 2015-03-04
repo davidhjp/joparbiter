@@ -114,77 +114,104 @@ architecture rtl of arbiter is
 	signal wrslot : slot_type; -- defines which CPU may write
 	
 	constant DWIDTH : integer := 8;
+	constant N : unsigned (DWIDTH-1 downto 0) := to_unsigned(cpu_cnt,DWIDTH);
 	signal slot_counter : integer range 0 to slot_length;
+	signal TDMA_in_use : std_logic;
 	
 begin
 
 
 	process(clk, reset)
 	variable active_num : integer range 0 to cpu_cnt := 0;
-	variable N : unsigned (DWIDTH-1 downto 0) := to_unsigned(cpu_cnt,DWIDTH);
 	variable D,R,Q : unsigned (DWIDTH-1 downto 0) := (others => '0');
 	variable cc : unsigned (DWIDTH-1 downto 0) := (others => '0');
 	begin
 		if reset = '1' then
 			active_num := 0;
-			N := to_unsigned(cpu_cnt,DWIDTH);
 			D := (others => '0');
 			R := (others => '0');
 			Q := (others => '0');
 			cc := (others => '0');
-		elsif rising_edge(clk) and slot_counter = slot_length-1 then
+			slot_counter <= 0;
+			counter <= 0;
+			TDMA_in_use <= '0';
+		elsif rising_edge(clk) then
 			active_num := 0;
 			for i in 0 to cpu_cnt-1 loop
 				if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
 					active_num := active_num + 1;
 				end if;
 			end loop;
-			D := to_unsigned(active_num,DWIDTH);
-			R := (others => '0');
-			Q := (others => '0');
-			cc := (others => '0');
-			for i in cpu_cnt-1 downto 0 loop
-				R := R sll 1;
-				R(0) := N(i);
-				if R >= D then
-					R := R - D;
-					Q(i) := '1';
-				end if;
-			end loop;
-			for i in 0 to cpu_cnt-1 loop
-				if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
-					if R > 0 then
-						cc := to_unsigned(slot_length * to_integer(Q) + slot_length + to_integer(cc),cc'length);
-						cpu_time(i) <= to_integer(cc);
-						R := R - 1;
-					else
-						cc := to_unsigned(slot_length * to_integer(Q) + to_integer(cc),cc'length);
-						cpu_time(i) <= to_integer(cc);
+			
+			if TDMA_in_use = '1' then
+				slot_counter <= slot_counter + 1;
+				counter <= counter + 1;
+			else
+				slot_counter <= 0;
+				counter <= 0;
+			end if;
+			
+			if slot_counter = slot_length-1 then
+				slot_counter <= 0;
+			end if;
+			if counter = period-1 then
+				counter <= 0;
+			end if;
+
+
+			if TDMA_in_use = '0' or slot_counter = slot_length-1 then
+				D := to_unsigned(active_num,DWIDTH);
+				R := (others => '0');
+				Q := (others => '0');
+				cc := (others => '0');
+				for i in cpu_cnt-1 downto 0 loop
+					R := R sll 1;
+					R(0) := N(i);
+					if R >= D then
+						R := R - D;
+						Q(i) := '1';
 					end if;
-				else 
-					cpu_time(i) <= 0;
+				end loop;
+				for i in 0 to cpu_cnt-1 loop
+					if next_reg_out(i).rd = '1' or next_reg_out(i).wr = '1' then
+						if R > 0 then
+							cc := to_unsigned(slot_length * to_integer(Q) + slot_length + to_integer(cc),cc'length);
+							cpu_time(i) <= to_integer(cc);
+							R := R - 1;
+						else
+							cc := to_unsigned(slot_length * to_integer(Q) + to_integer(cc),cc'length);
+							cpu_time(i) <= to_integer(cc);
+						end if;
+					else 
+						cpu_time(i) <= 0;
+					end if;
+				end loop;
+				
+				if active_num > 0 then
+					TDMA_in_use <= '1';
+				else
+					TDMA_in_use <= '0';
+					slot_counter <= 0;
+					counter <= 0;
 				end if;
-			end loop;
+			end if;
+			
+
 		end if;
 	end process;
 
 	-- generate counter
-	gen_counter: process(clk, reset)
-	begin
-		if reset = '1' then
-			counter <= 0;
-			slot_counter <= 0;
-		elsif rising_edge(clk) then
-			counter <= counter + 1;
-			slot_counter <= slot_counter + 1;
-			if counter = period-1 then
-				counter <= 0;
-			end if;
-			if slot_counter = slot_length-1 then
-				slot_counter <= 0;
-			end if;
-		end if;
-	end process;
+--	gen_counter: process(clk, reset)
+--	begin
+--		if reset = '1' then
+--			counter <= 0;
+--		elsif rising_edge(clk) then
+--			counter <= counter + 1;
+--			if counter = period-1 then
+--				counter <= 0;
+--			end if;
+--		end if;
+--	end process;
 	
 	-- generate slot information
 --	gen_timing: for i in 0 to cpu_cnt-1 generate
