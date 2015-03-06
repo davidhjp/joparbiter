@@ -116,8 +116,30 @@ architecture rtl of arbiter is
 	constant DWIDTH : integer := 8;
 	constant N : unsigned (DWIDTH-1 downto 0) := to_unsigned(cpu_cnt,DWIDTH);
 	signal TDMA_in_use : std_logic;
+	signal rdslotp, wrslotp : std_logic_vector(cpu_cnt-1 downto 0);
 	
 begin
+
+	process(arb_out, TDMA_in_use)
+	variable ss : integer range 0 to 1;
+	begin
+		rdslotp <= (others => '0');
+		wrslotp <= (others => '0');
+		if TDMA_in_use = '0' then
+			for i in 0 to cpu_cnt-1 loop
+				ss := 0;
+				if arb_out(i).rd = '1' and ss = 0 then
+					ss := 1;
+					rdslotp(i) <= '1';
+				end if;
+				ss := 0;
+				if arb_out(i).wr = '1' and ss = 0 then
+					ss := 1;
+					wrslotp(i) <= '1';
+				end if;
+			end loop;
+		end if;
+	end process;
 	
 	process(clk, reset)
 	variable cc : integer range 0 to slot_length * cpu_cnt;
@@ -157,6 +179,7 @@ begin
 				if active_num > 0 then
 					TDMA_in_use <= '1';
 					period <= active_num * slot_length;
+					counter <= 1;
 				else
 					TDMA_in_use <= '0';
 					counter <= 0;
@@ -253,7 +276,7 @@ begin
 
 	-- state machine for each master
 	async: for i in 0 to cpu_cnt-1 generate
-		process(rdslot, wrslot, state, waitstate, reg_in, reg_out, arb_out, mem_in)
+		process(rdslot, wrslot, state, waitstate, reg_in, reg_out, arb_out, mem_in, wrslotp, rdslotp)
 		begin
 
 			next_state(i) <= state(i);
@@ -298,6 +321,18 @@ begin
 				when others =>
 					null;					
 			end case;
+			
+			if rdslotp(i) = '1' then
+				next_reg_out(i) <= arb_out(i);
+				next_state(i) <= waitR;
+				next_reg_out(i).rd <= '0';
+			end if;
+			
+			if wrslotp(i) = '1' then
+				next_reg_out(i) <= arb_out(i);
+				next_state(i) <= waitW;
+				next_reg_out(i).wr <= '0';
+			end if;
 
 			-- CPUs better know when to issue reads or write
 			if arb_out(i).rd = '1' then
@@ -337,7 +372,7 @@ begin
 		end process;
 	end generate;
 
-	mux: process (rdslot, wrslot, arb_out, reg_out)
+	mux: process (rdslot, wrslot, arb_out, reg_out, rdslotp, wrslotp)
 	begin  -- process muxdemux
 
 		mem_out.address <= (others => '0');
@@ -358,6 +393,13 @@ begin
 				mem_out <= arb_out(i);
 			end if;
 			if wrslot(i) = '1' and arb_out(i).wr = '1' then
+				mem_out <= arb_out(i);
+			end if;
+			
+			if rdslotp(i) = '1' then
+				mem_out <= arb_out(i);
+			end if;
+			if wrslotp(i) = '1' then
 				mem_out <= arb_out(i);
 			end if;
 		end loop;  -- i		
