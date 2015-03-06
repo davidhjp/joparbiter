@@ -126,15 +126,11 @@ begin
 		rdslotp <= (others => '0');
 		wrslotp <= (others => '0');
 		if TDMA_in_use = '0' then
+			ss := 0;
 			for i in 0 to cpu_cnt-1 loop
-				ss := 0;
-				if arb_out(i).rd = '1' and ss = 0 then
+				if (arb_out(i).rd = '1' or arb_out(i).wr = '1') and ss = 0 then
 					ss := 1;
 					rdslotp(i) <= '1';
-				end if;
-				ss := 0;
-				if arb_out(i).wr = '1' and ss = 0 then
-					ss := 1;
 					wrslotp(i) <= '1';
 				end if;
 			end loop;
@@ -384,10 +380,10 @@ begin
 				mem_out <= arb_out(i);
 			end if;
 			
-			if rdslotp(i) = '1' then
+			if rdslotp(i) = '1' and arb_out(i).rd = '1' then
 				mem_out <= arb_out(i);
 			end if;
-			if wrslotp(i) = '1' then
+			if wrslotp(i) = '1' and arb_out(i).wr = '1' then
 				mem_out <= arb_out(i);
 			end if;
 		end loop;  -- i		
