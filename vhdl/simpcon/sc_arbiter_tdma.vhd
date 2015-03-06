@@ -321,24 +321,12 @@ begin
 				when others =>
 					null;					
 			end case;
-			
-			if rdslotp(i) = '1' then
-				next_reg_out(i) <= arb_out(i);
-				next_state(i) <= waitR;
-				next_reg_out(i).rd <= '0';
-			end if;
-			
-			if wrslotp(i) = '1' then
-				next_reg_out(i) <= arb_out(i);
-				next_state(i) <= waitW;
-				next_reg_out(i).wr <= '0';
-			end if;
 
 			-- CPUs better know when to issue reads or write
 			if arb_out(i).rd = '1' then
 				next_state(i) <= pending;
 				next_reg_out(i) <= arb_out(i);
-				if rdslot(i) = '1' then
+				if rdslot(i) = '1' or rdslotp(i) = '1' then
 					next_state(i) <= waitR;
 					next_reg_out(i).rd <= '0';
 				end if;
@@ -346,7 +334,7 @@ begin
 			if arb_out(i).wr = '1' then
 				next_state(i) <= pending;
 				next_reg_out(i) <= arb_out(i);
-				if wrslot(i) = '1' then
+				if wrslot(i) = '1' or wrslotp(i) = '1' then
 					next_state(i) <= waitW;
 					next_reg_out(i).wr <= '0';
 				end if;
